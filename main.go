@@ -9,14 +9,20 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"gopkg.in/yaml.v3"
 )
 
-var con config
+var con Config
 
-type config struct {
-	script_path string `yaml:"path"`
-	port        string `yaml:"port"`
+type Config struct {
+	Script_path string `yaml:"path"`
+	Port        string `yaml:"port"`
+	Access_key  string `yaml:"access_key"`
+}
+
+type Access_key struct {
+	Key string `json:"key"`
 }
 
 func Cors() gin.HandlerFunc {
@@ -36,10 +42,19 @@ func Cors() gin.HandlerFunc {
 
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
+		var key Access_key
+		err := c.ShouldBindBodyWith(&key, binding.JSON)
+		if err != nil {
+			log.Println(err)
+			c.JSON(401, gin.H{
+				"msg": err,
+			})
+		}
+		if key.Key != con.Access_key {
+			c.Abort()
+		}
 		c.Next()
 	}
-
 }
 
 func main() {
@@ -65,11 +80,11 @@ func Run() {
 	e.Use(gin.Logger(), gin.Recovery(), Cors(), Auth())
 	e.POST("alive")
 	e.PUT("redeploy", redeploy)
-	e.Run(":" + con.port)
+	e.Run(":" + con.Port)
 }
 
 func redeploy(c *gin.Context) {
-	cmd := exec.Command(con.script_path)
+	cmd := exec.Command(con.Script_path)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
