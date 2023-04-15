@@ -68,7 +68,7 @@ func ConfigInit(c interface{}, path string) {
 	if err != nil {
 		log.Panic(err)
 	}
-	err = yaml.Unmarshal(yamlFile, con)
+	err = yaml.Unmarshal(yamlFile, &con)
 	if err != nil {
 		log.Panic(err)
 	}
