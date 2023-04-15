@@ -22,7 +22,7 @@ type Config struct {
 }
 
 type Access_key struct {
-	Key string `json:"key"`
+	Key string `json:"access_key"`
 }
 
 func Cors() gin.HandlerFunc {
@@ -46,12 +46,10 @@ func Auth() gin.HandlerFunc {
 		err := c.ShouldBindBodyWith(&key, binding.JSON)
 		if err != nil {
 			log.Println(err)
-			c.JSON(401, gin.H{
-				"msg": err,
-			})
 		}
 		if key.Key != con.Access_key {
-			c.Abort()
+			log.Println("invailAccesskey")
+			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 		c.Next()
 	}
@@ -93,9 +91,6 @@ func redeploy(c *gin.Context) {
 	err := cmd.Run()
 	if err != nil {
 		log.Println(err)
-		c.JSON(200, gin.H{
-			"err": err,
-		})
 	}
 
 	outStr, errStr := stdout.String(), stderr.String()
